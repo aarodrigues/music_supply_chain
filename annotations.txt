@@ -1,0 +1,20 @@
+Product ID
+Product UPC
+Origination Information
+Farm
+Misc organization info
+Longitude & Latitude of geo coordinates
+Product notes
+
+Music ID
+Composition date
+Composition local
+Music Composer
+Duration
+Lyrics Composer
+Lyrics Language
+Record date
+Record local
+Music Producer
+Musicians
+
