@@ -47,6 +47,7 @@ contract MusicSupplyChain {
     string  productNotes; // Product Notes
     uint    productPrice; // Product Price
     State   itemState;  // Product State as represented in the enum above
+    address producerID;  // Metamask-Ethereum address of the producer
     address providerID;  // Metamask-Ethereum address of the provider
     address consumerID; // Metamask-Ethereum address of the Consumer
   }
@@ -175,9 +176,9 @@ contract MusicSupplyChain {
   function composeItem(uint _upc, address _originComposerID, string _originMusicName, string  _originMusicLongitude, string  _productNotes) public 
   {
     // Add the new item as part of Harvest
-    item[_upc] = Item({upc: _upc, originComposerID: _originComposerID, originMusicName: _originMusicName, 
+    item[_upc] = Item({upc: _upc, ownerID: owner, originComposerID: _originComposerID, originMusicName: _originMusicName, 
         originMusicInformation: _originMusicInformation, productNotes: _productNotes, 
-        itemState: itemState.Composed,providerID: 0 ,consumerID: 0 })
+        itemState: itemState.Composed, producerID: 0, providerID: 0, consumerID: 0 })
     
     // Increment sku
     sku = sku + 1;
@@ -188,7 +189,7 @@ contract MusicSupplyChain {
   }
 
   // Define a function 'arrangetItem' that allows a farmer to mark an item 'Arranged'
-  function arrangeItem(uint _upc) composed(_upc) verifyCaller(msg.sender) public 
+  function arrangeItem(uint _upc) composed(_upc) verifyCaller(item[_upc].ownerID) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -203,7 +204,7 @@ contract MusicSupplyChain {
   }
 
   // Define a function 'record' that allows a farmer to mark an item 'Recorded'
-  function record(uint _upc) arranged(_upc) verifyCaller(msg.sender) public 
+  function record(uint _upc) arranged(_upc) verifyCaller(item[_upc].producerID) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -217,7 +218,7 @@ contract MusicSupplyChain {
 
 
     // Define a function 'record' that allows a farmer to mark an item 'Recorded'
-  function edit(uint _upc) recorded(_upc) verifyCaller(msg.sender) public 
+  function edit(uint _upc) recorded(_upc) verifyCaller(item[_upc].producerID) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -230,7 +231,7 @@ contract MusicSupplyChain {
   }
   
       // Define a function 'record' that allows a farmer to mark an item 'Recorded'
-  function mixing(uint _upc) edited(_upc) verifyCaller(msg.sender) public 
+  function mixing(uint _upc) edited(_upc) verifyCaller(item[_upc].producerID) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -243,7 +244,7 @@ contract MusicSupplyChain {
   }
 
       // Define a function 'record' that allows a farmer to mark an item 'Recorded'
-  function mastering(uint _upc) mixed(_upc) verifyCaller(msg.sender) public 
+  function mastering(uint _upc) mixed(_upc) verifyCaller(item[_upc].producerID) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -256,7 +257,7 @@ contract MusicSupplyChain {
   }
 
   // Define a function 'sellItem' that allows a farmer to mark an item 'ForSale'
-  function sellItem(uint _upc, uint _price) mastered(_upc) verifyCaller(msg.sender) public 
+  function sellItem(uint _upc, uint _price) mastered(_upc) onlyOwner() public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
