@@ -23,12 +23,14 @@ contract MusicSupplyChain {
   { 
     Composed,  // 0
     Arranged,  // 1
-    Recorded,     // 2
-    ForSale,    // 3
-    Sold,       // 4
-    Shipped,    // 5
-    Received,   // 6
-    Purchased   // 7
+    Recorded,  // 2
+    Edited,    // 3
+    Mixed,     // 4
+    Mastered,  // 5
+    ForSale,   // 6
+    Sold,      // 7
+    Shipped,   // 8
+    Purchased  // 9
     }
 
   State constant defaultState = State.Composed;
@@ -45,8 +47,7 @@ contract MusicSupplyChain {
     string  productNotes; // Product Notes
     uint    productPrice; // Product Price
     State   itemState;  // Product State as represented in the enum above
-    address distributorID;  // Metamask-Ethereum address of the Distributor
-    address retailerID; // Metamask-Ethereum address of the Retailer
+    address providerID;  // Metamask-Ethereum address of the provider
     address consumerID; // Metamask-Ethereum address of the Consumer
   }
 
@@ -54,10 +55,12 @@ contract MusicSupplyChain {
   event Composed(uint upc);
   event Arranged(uint upc);
   event Recorded(uint upc);
+  event Edited(uint upc);
+  event Mixed(uint upc);
+  event Mastered(uint upc);
   event ForSale(uint upc);
   event Sold(uint upc);
-  event Shipped(uint upc);
-  event Received(uint upc);
+  event Provided(uint upc);
   event Purchased(uint upc);
 
   // Define a modifer that checks to see if msg.sender == owner of the contract
@@ -104,6 +107,24 @@ contract MusicSupplyChain {
     _;
   }
 
+  // Define a modifier that checks if an item.state of a upc is Edited
+  modifier edited(uint _upc) {
+    require(items[_upc].itemState == State.Edited);
+    _;
+  }
+
+    // Define a modifier that checks if an item.state of a upc is Edited
+  modifier mixed(uint _upc) {
+    require(items[_upc].itemState == State.Mixed);
+    _;
+  }
+
+    // Define a modifier that checks if an item.state of a upc is Edited
+  modifier mastered(uint _upc) {
+    require(items[_upc].itemState == State.Mastered);
+    _;
+  }
+
   // Define a modifier that checks if an item.state of a upc is ForSale
   modifier forSale(uint _upc) {
     require(items[_upc].itemState == State.ForSale);
@@ -115,8 +136,8 @@ contract MusicSupplyChain {
     require(items[_upc].itemState == State.Sold);
     _;
   }
-  
-  // Define a modifier that checks if an item.state of a upc is Shipped
+
+    // Define a modifier that checks if an item.state of a upc is Sold
   modifier shipped(uint _upc) {
     require(items[_upc].itemState == State.Shipped);
     _;
@@ -156,7 +177,7 @@ contract MusicSupplyChain {
     // Add the new item as part of Harvest
     item[_upc] = Item({upc: _upc, originComposerID: _originComposerID, originMusicName: _originMusicName, 
         originMusicInformation: _originMusicInformation, productNotes: _productNotes, 
-        itemState: itemState.Composed,distributorID: 0 ,retailerID: 0 ,consumerID: 0 })
+        itemState: itemState.Composed,providerID: 0 ,consumerID: 0 })
     
     // Increment sku
     sku = sku + 1;
@@ -194,8 +215,48 @@ contract MusicSupplyChain {
     emit Recorded(_upc);
   }
 
+
+    // Define a function 'record' that allows a farmer to mark an item 'Recorded'
+  function edit(uint _upc) recorded(_upc) verifyCaller(msg.sender) public 
+  // Call modifier to check if upc has passed previous supply chain stage
+  
+  // Call modifier to verify caller of this function
+  
+  {
+    // Update the appropriate fields
+    item[_upc].itemState = itemState.Edited;
+    // Emit the appropriate event
+    emit Edited(_upc);
+  }
+  
+      // Define a function 'record' that allows a farmer to mark an item 'Recorded'
+  function mixing(uint _upc) edited(_upc) verifyCaller(msg.sender) public 
+  // Call modifier to check if upc has passed previous supply chain stage
+  
+  // Call modifier to verify caller of this function
+  
+  {
+    // Update the appropriate fields
+    item[_upc].itemState = itemState.Mixed;
+    // Emit the appropriate event
+    emit Mixed(_upc);
+  }
+
+      // Define a function 'record' that allows a farmer to mark an item 'Recorded'
+  function mastering(uint _upc) mixed(_upc) verifyCaller(msg.sender) public 
+  // Call modifier to check if upc has passed previous supply chain stage
+  
+  // Call modifier to verify caller of this function
+  
+  {
+    // Update the appropriate fields
+    item[_upc].itemState = itemState.Mastered;
+    // Emit the appropriate event
+    emit Mastered(_upc);
+  }
+
   // Define a function 'sellItem' that allows a farmer to mark an item 'ForSale'
-  function sellItem(uint _upc, uint _price) recorded(_upc) verifyCaller(msg.sender) public 
+  function sellItem(uint _upc, uint _price) mastered(_upc) verifyCaller(msg.sender) public 
   // Call modifier to check if upc has passed previous supply chain stage
   
   // Call modifier to verify caller of this function
@@ -208,10 +269,10 @@ contract MusicSupplyChain {
     emit ForSale(_upc);
   }
 
-  // Define a function 'buyItem' that allows the disributor to mark an item 'Sold'
+  // Define a function 'buyItem' that allows the provider to mark an item 'Sold'
   // Use the above defined modifiers to check if the item is available for sale, if the buyer has paid enough, 
   // and any excess ether sent is refunded back to the buyer
-  function buyItem(uint _upc) forSale(_upc) paidEnough(Item[_upc].productPrice) checkValue(_upc) public payable 
+  function buyItem(uint _upc) forSale(_upc) paidEnough(msg.value) checkValue(_upc) public payable 
     // Call modifier to check if upc has passed previous supply chain stage
     
     // Call modifer to check if buyer has paid enough
@@ -222,8 +283,8 @@ contract MusicSupplyChain {
     
     // Update the appropriate fields - ownerID, distributorID, itemState
      Item[_upc].itemState = itemState.Sold;
-     Item[_upc].distributorID = ;
-     Item[_upc].ownerID = ;
+     Item[_upc].providerID = msg.sender;
+     Item[_upc].ownerID = msg.sender;
     // Transfer money to farmer
      Items[_upc].ownerID.transfer(Item[_upc].productPrice);
     // emit the appropriate event
@@ -232,7 +293,7 @@ contract MusicSupplyChain {
 
   // Define a function 'shipItem' that allows the distributor to mark an item 'Shipped'
   // Use the above modifers to check if the item is sold
-  function shipItem(uint _upc) sold(_upc) verifyCaller(distributorID) public 
+  function shipItem(uint _upc) sold(_upc) verifyCaller(Item[_upc].providerID) public 
     // Call modifier to check if upc has passed previous supply chain stage
     
     // Call modifier to verify caller of this function
@@ -245,30 +306,20 @@ contract MusicSupplyChain {
 
   }
 
-  // Define a function 'receiveItem' that allows the retailer to mark an item 'Received'
-  // Use the above modifiers to check if the item is shipped
-  function receiveItem(uint _upc) shipped(_upc) verifyCaller(retailerID) public 
-    // Call modifier to check if upc has passed previous supply chain stage
-    
-    // Access Control List enforced by calling Smart Contract / DApp
-    {
-    // Update the appropriate fields - ownerID, retailerID, itemState
-    
-    // Emit the appropriate event
-    
-  }
-
   // Define a function 'purchaseItem' that allows the consumer to mark an item 'Purchased'
   // Use the above modifiers to check if the item is received
-  function purchaseItem(uint _upc) public 
+  function purchaseItem(uint _upc) shipped(_upc) public 
     // Call modifier to check if upc has passed previous supply chain stage
     
     // Access Control List enforced by calling Smart Contract / DApp
     {
     // Update the appropriate fields - ownerID, consumerID, itemState
+    Item[_upc].itemState = itemState.Purchased;
+    Item[_upc].consumerID = msg.sender;
+    Item[_upc].ownerID = msg.sender;
     
     // Emit the appropriate event
-    
+    emit Purchased(upc);
   }
 
   // Define a function 'fetchItemBufferOne' that fetches the data
